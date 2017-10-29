@@ -1,0 +1,138 @@
+
+openapi: 3.0.0
+servers: 
+  - url: https://online.atol.ru/possystem/v3
+    description: Production server
+info:
+  description: |
+    Description of ATOL Online RESTful API. ATOL Online provides cashbox as service 
+    for e-shops. You can find more information at [https://online.atol.ru](https://online.atol.ru) 
+    or [https://t.me/atolonline](https://t.me/atolonline)
+  version: "3.0.0"
+  title: ATOL Online
+  termsOfService: 'https://online.atol.ru/'
+  contact:
+    email: ecom@atol.ru
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+paths:
+  /getToken :
+    post:
+      summary: User authorization
+      operationId: setCredentials
+      requestBody:
+        $ref: '#/components/requestBodies/Credentials'
+      responses:
+        '200':
+          description: User authorized succesfull, returns previous token or new
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+    get:
+      summary: Receiving a token
+      operationId: getToken
+      responses:
+        '200':
+          description: Successful result of command, returns actual token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '400':
+          description: Incorrect request or wrong data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '500':
+          description: Failed to generate token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+      parameters:
+        - in: query
+          name: login
+          schema: 
+            type: string
+          required: true
+          description: Username for data tranfering
+        - in: query
+          name: pass
+          schema: 
+            type: string
+            format: password
+          required: true
+          description: Password for data transfering
+externalDocs:
+  description: Official description of API
+  url: 'https://goo.gl/TCrHLA'
+components:
+  schemas:
+    Credentials:
+      type: object
+      required:
+        - login
+        - pass
+      properties:
+        login:
+          type: string
+          example: netletest
+          description: Username for data transfering
+        pass:
+          type: string
+          format: password 
+          example: v2AfscRjr
+          description: Password for data transfering
+    ApiResponse:
+      type: object
+      required:
+        - code
+        - text
+      properties:
+        code:
+          type: integer
+          minimum: 1
+          description: Result code of command execution
+        text:
+          type: string
+          nullable: true
+          description: Error text
+    Token:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          required:
+            - token
+          properties:
+            token:
+              type: string
+              description: |
+                Authorization token. Token is alife 24 hours after authorization, new token can be regenerateв after 23 hours after last authorization.
+          description: |
+            Property code can take on values
+            0 - new token has been given;
+            1 - previous token has been given;
+            2 - error caused;
+            17 - incorrect request, need to retry request with correct data (ErrorAuthBadRequest), this code compains HTTP status 400;
+            18 - failed to generate token, need to retry request (ErrorAuthGenToken), this code compains HTTP status 500;
+            19 - wrong login or password, need to retry request with correct data (ErrorAuthWrongUserOrPassword), this code compains HTTP status 400;
+            Property text will be not null if value of code greater than 1
+  requestBodies:
+    Credentials:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Credentials'
+      description: Access parameters required for authorization
+      required: true
+    Token:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Token'
+      description: Authorization token
+      required: true
+    
